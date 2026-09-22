@@ -25,13 +25,16 @@ class EventoController extends Controller
      */
     public function show($id)
     {
-        $evento = Evento::find($id);
-
-        // ⚠ BUG LEGADO: Carrega TODOS os registros da tabela no PHP
-        $perguntas = Pergunta::all();
-
+        $evento = Evento::findOrFail($id);
+    
+        $perguntas = Pergunta::with('user')
+            ->where('evento_id', $evento->id)
+            ->where('is_public', true)
+            ->latest()
+            ->paginate(10);
+    
         return view('eventos.show', compact('evento', 'perguntas'));
-    }
+    }   
 
     /**
      * TICKET #001 (BUG LEGADO DE SEGURANÇA):
@@ -50,4 +53,5 @@ class EventoController extends Controller
         return redirect()->route('eventos.show', $evento->id)
             ->with('sucesso', 'Sua pergunta foi enviada com sucesso!');
     }
+    
 }
