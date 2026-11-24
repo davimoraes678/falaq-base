@@ -21,8 +21,10 @@ class EventoController extends Controller
         $evento = Evento::findOrFail($id);
     
         $perguntas = Pergunta::with('user')
+            ->withCount('votos')
             ->where('evento_id', $evento->id)
             ->where('is_public', true)
+            ->orderByDesc('votos_count')
             ->latest()
             ->paginate(10);
     
@@ -52,5 +54,18 @@ class EventoController extends Controller
     public function store(EventoFormRequest $request){
         $evento = $request->user()->eventos()->create($request->validated());
         return redirect()->route('eventos.show', $evento->id);
+    }
+
+    public function destroyPergunta(Pergunta $pergunta)
+    {
+        $this->authorize('delete', $pergunta);
+        $pergunta->delete();
+        return back()->with('sucesso', 'Pergunta excluída com sucesso!');
+    }
+
+    public function votar(Pergunta $pergunta)
+    {
+        $pergunta->votos()->toggle(auth()->id());
+        return back()->with('sucesso', 'Voto atualizado com sucesso!');
     }
 }
